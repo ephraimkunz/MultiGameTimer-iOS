@@ -229,6 +229,9 @@
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7U9-mC-eDa">
                                 <rect key="frame" x="20" y="629" width="335" height="30"/>
                                 <state key="normal" title="Transition to Next"/>
+                                <connections>
+                                    <action selector="stopButtonTapped:" destination="TzT-WI-G2Z" eventType="touchUpInside" id="VoX-MB-p2I"/>
+                                </connections>
                             </button>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="V9Y-fL-Kn3">
                                 <rect key="frame" x="154" y="317" width="66.5" height="33.5"/>
@@ -246,6 +249,9 @@
                             <constraint firstItem="V9Y-fL-Kn3" firstAttribute="centerY" secondItem="pCm-Db-dsY" secondAttribute="centerY" id="zfq-El-iay"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="timeLabel" destination="V9Y-fL-Kn3" id="Vce-lf-TfM"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ikR-4c-qHE" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

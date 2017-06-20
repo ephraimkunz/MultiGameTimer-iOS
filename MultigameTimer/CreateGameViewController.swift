@@ -10,7 +10,10 @@ import UIKit
 
 class CreateGameViewController: UIViewController {
     let gameShortId = arc4random_uniform(899) + 100
-    let gameId = Constants.gameIds[0]//Constants.gameIds[gameShortId - 100]
+    var gameId: String {
+        let index = Int(gameShortId - 100)
+        return Constants.gameIds[index]
+    }
     var central: GameCentral!
     var players = [Player]()
 

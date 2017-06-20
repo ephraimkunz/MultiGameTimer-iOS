@@ -16,9 +16,13 @@ class JoinGameViewController: UIViewController {
     @IBOutlet weak var joinGameButton: UIButton!
 
     @IBAction func joinGameTapped(_ sender: Any) {
-        let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "WaitForGameStartViewController") as! WaitForGameStartViewController
-        let uuid = Constants.gameIds[0]//[gameIdField.text!] // Must have text if the button was enabled to be tapped
+        guard let string = gameIdField.text, let index = Int(string) else {
+            return // Must have text if the button was enabled to be tapped
+        }
 
+        let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "WaitForGameStartViewController") as! WaitForGameStartViewController
+
+        let uuid = Constants.gameIds[index - 100]
         vc.peripheral = GamePeripheral(uuid: uuid)
         navigationController?.pushViewController(vc, animated: true)
     }

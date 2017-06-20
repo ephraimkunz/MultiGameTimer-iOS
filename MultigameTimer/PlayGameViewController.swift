@@ -12,30 +12,28 @@ class PlayGameViewController: UIViewController {
     var central: GameCentral?
     var players: [Player]?
     var peripheral: GamePeripheral?
+    var clock: GameClock!
     var isCentral: Bool  {
             return central != nil
     }
+
+    @IBOutlet weak var timeLabel: UILabel!
     
+    @IBAction func stopButtonTapped(_ sender: Any) {
+        clock.stopClock()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        clock = GameClock(initialTime: 60 * 1, increment: 0, callback: { timeString in
+            self.timeLabel.text = timeString
+        })
+
+        clock.startClock()
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
-    
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
 }

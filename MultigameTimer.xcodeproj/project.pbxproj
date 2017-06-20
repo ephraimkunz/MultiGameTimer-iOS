@@ -18,6 +18,7 @@
 		E33F37111EF5794E004A5781 /* GameCentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33F37101EF5794E004A5781 /* GameCentral.swift */; };
 		E33F37131EF57955004A5781 /* GamePeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33F37121EF57955004A5781 /* GamePeripheral.swift */; };
 		E33F37151EF5A76E004A5781 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33F37141EF5A76E004A5781 /* Player.swift */; };
+		E38183341EF8E814006380D9 /* GameClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = E38183331EF8E814006380D9 /* GameClock.swift */; };
 		E3A9F05F1EF6D621002C5F17 /* WaitForGameStartViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A9F05E1EF6D621002C5F17 /* WaitForGameStartViewController.swift */; };
 		E3A9F0611EF6E5E6002C5F17 /* PlayGameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A9F0601EF6E5E6002C5F17 /* PlayGameViewController.swift */; };
 /* End PBXBuildFile section */
@@ -36,6 +37,7 @@
 		E33F37101EF5794E004A5781 /* GameCentral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameCentral.swift; sourceTree = "<group>"; };
 		E33F37121EF57955004A5781 /* GamePeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GamePeripheral.swift; sourceTree = "<group>"; };
 		E33F37141EF5A76E004A5781 /* Player.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+		E38183331EF8E814006380D9 /* GameClock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameClock.swift; sourceTree = "<group>"; };
 		E3A9F05E1EF6D621002C5F17 /* WaitForGameStartViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WaitForGameStartViewController.swift; sourceTree = "<group>"; };
 		E3A9F0601EF6E5E6002C5F17 /* PlayGameViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlayGameViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -80,6 +82,7 @@
 				E33F36FF1EF56B10004A5781 /* Assets.xcassets */,
 				E33F37011EF56B10004A5781 /* LaunchScreen.storyboard */,
 				E33F37041EF56B10004A5781 /* Info.plist */,
+				E38183331EF8E814006380D9 /* GameClock.swift */,
 			);
 			path = MultigameTimer;
 			sourceTree = "<group>";
@@ -174,6 +177,7 @@
 				E3A9F0611EF6E5E6002C5F17 /* PlayGameViewController.swift in Sources */,
 				E33F370D1EF56C33004A5781 /* JoinGameViewController.swift in Sources */,
 				E3A9F05F1EF6D621002C5F17 /* WaitForGameStartViewController.swift in Sources */,
+				E38183341EF8E814006380D9 /* GameClock.swift in Sources */,
 				E33F37131EF57955004A5781 /* GamePeripheral.swift in Sources */,
 				E33F37151EF5A76E004A5781 /* Player.swift in Sources */,
 				E33F370B1EF56C29004A5781 /* CreateGameViewController.swift in Sources */,
