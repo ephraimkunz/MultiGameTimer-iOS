@@ -14,6 +14,7 @@ class PlayGameViewController: UIViewController {
     var peripheral: GamePeripheral?
     var nextPlayerIndex: Int?
     var clock: GameClock!
+    var currentPlayer: Player?
     var isCentral: Bool  {
             return central != nil
     }
@@ -38,6 +39,9 @@ class PlayGameViewController: UIViewController {
             self.timeLabel.text = timeString
         })
 
+        // Set initial time label, as it may be some time before this player gets to go
+        self.timeLabel.text = clock.formattedTimeRemaining()
+
         central?.playerTurnFinishedCallback = { player in
             self.nextPlayer()
         }
@@ -58,8 +62,8 @@ class PlayGameViewController: UIViewController {
     // Advances the turn to the next player
     func nextPlayer() {
         if let index = nextPlayerIndex, let players = players {
-            let player = players[index]
-            startPlayerTurn(player: player)
+            currentPlayer = players[index]
+            startPlayerTurn(player: currentPlayer!)
 
             // Calculate next player index and update
             if index == players.count - 1 {

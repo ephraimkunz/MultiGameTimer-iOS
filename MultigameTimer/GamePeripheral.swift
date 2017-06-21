@@ -36,7 +36,7 @@ class GamePeripheral: NSObject {
     func joinGame() {
         let startPlay = CBMutableCharacteristic(type: Constants.StartPlayCharacteristic, properties: .write, value: nil, permissions: .writeable)
         // Save this characteristic so we can update values for it later
-        IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: .notify, value: nil, permissions: .writeable)
+        IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
 
         let name = UIDevice.current.name
         let playerName = CBMutableCharacteristic(type: Constants.PlayerNameCharacteristic, properties: .read, value: name.data(using: .ascii), permissions: .readable)

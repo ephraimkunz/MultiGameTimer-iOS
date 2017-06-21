@@ -23,9 +23,12 @@ class GameCentral: NSObject {
         gameUuid = CBUUID(string: uuid)
         connectedCallback = newConnected
         super.init()
+
         let me = Player()
         me.displayName = "Me"
         players.append(me)
+        connectedCallback?(players) // Show "Me" right away
+
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
@@ -39,14 +42,20 @@ class GameCentral: NSObject {
     }
 
     func startPlayerTurn(player: Player) {
-        guard let periph = player.peripheral else {
+        guard let periph = player.peripheral, let services = periph.services else {
             return
         }
 
-        for char in characteristics {
-            if char.uuid == Constants.IsPlayerTurnCharacteristic {
-                // Write a value to the characteristic to start the turn
-                periph.writeValue("true".data(using: .ascii)!, for: char, type: .withResponse)
+        for service in services {
+            guard let characteristics = service.characteristics else {
+                return
+            }
+
+            for char in characteristics {
+                if char.uuid == Constants.IsPlayerTurnCharacteristic {
+                    // Write a value to the characteristic to start the turn
+                    periph.writeValue("true".data(using: .ascii)!, for: char, type: .withResponse)
+                }
             }
         }
     }
@@ -68,6 +77,7 @@ extension GameCentral: CBCentralManagerDelegate {
         discovered.append(peripheral)
         let player = Player()
         player.displayName = name
+        player.peripheral = peripheral
         players.append(player)
         connectedCallback?(players)
         peripheral.delegate = self
@@ -93,7 +103,7 @@ extension GameCentral: CBPeripheralDelegate {
 
         for service in services {
             if service.uuid == gameUuid {
-                peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic], for: service)
+                peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic], for: service)
             }
         }
     }
