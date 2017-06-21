@@ -15,6 +15,8 @@ class GamePeripheral: NSObject {
     private var gameStarted = false
     private var gameUuid: String!
     var gameStartedCallback: ((Bool) -> Void)?
+    var myTurnStartedCallback: ((Void) -> Void)?
+    var IsPlayerTurnCharacteristic: CBMutableCharacteristic?
 
     init(uuid: String) {
         super.init()
@@ -22,14 +24,25 @@ class GamePeripheral: NSObject {
         gameUuid = uuid
     }
 
+    func myTurnEnded() {
+        // At this point, the central should have already subscribed to the IsPlayerTurn characteristic. We now notify it that we are done.
+        guard let isPlayerTurnChar = IsPlayerTurnCharacteristic else {
+            return
+        }
+
+        peripheralManager.updateValue("false".data(using: .ascii)!, for: isPlayerTurnChar, onSubscribedCentrals: nil)
+    }
+
     func joinGame() {
         let startPlay = CBMutableCharacteristic(type: Constants.StartPlayCharacteristic, properties: .write, value: nil, permissions: .writeable)
+        // Save this characteristic so we can update values for it later
+        IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: .notify, value: nil, permissions: .writeable)
 
         let name = UIDevice.current.name
         let playerName = CBMutableCharacteristic(type: Constants.PlayerNameCharacteristic, properties: .read, value: name.data(using: .ascii), permissions: .readable)
 
         let gameService = CBMutableService(type: CBUUID(string: gameUuid), primary: true)
-        gameService.characteristics = [startPlay, playerName]
+        gameService.characteristics = [startPlay, playerName, IsPlayerTurnCharacteristic!]
 
 
         peripheralManager.add(gameService)
@@ -65,8 +78,21 @@ extension GamePeripheral: CBPeripheralManagerDelegate {
     }
 
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
-        gameStartedCallback?(true)
+        for request in requests {
+            if request.characteristic.uuid == Constants.StartPlayCharacteristic {
+                gameStartedCallback?(true)
+            }
+            if request.characteristic.uuid == Constants.IsPlayerTurnCharacteristic {
+                myTurnStartedCallback?()
+            }
+        }
         peripheral.stopAdvertising()
+    }
+
+    func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
+        if characteristic.uuid == Constants.IsPlayerTurnCharacteristic {
+            print("Central subscribed to me!")
+        }
     }
 }
 

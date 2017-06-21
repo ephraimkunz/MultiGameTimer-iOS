@@ -250,6 +250,7 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="stopClockButton" destination="7U9-mC-eDa" id="s6f-c3-Dkx"/>
                         <outlet property="timeLabel" destination="V9Y-fL-Kn3" id="Vce-lf-TfM"/>
                     </connections>
                 </viewController>

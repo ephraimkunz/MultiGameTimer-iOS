@@ -12,15 +12,23 @@ class PlayGameViewController: UIViewController {
     var central: GameCentral?
     var players: [Player]?
     var peripheral: GamePeripheral?
+    var nextPlayerIndex: Int?
     var clock: GameClock!
     var isCentral: Bool  {
             return central != nil
     }
 
     @IBOutlet weak var timeLabel: UILabel!
+    @IBOutlet weak var stopClockButton: UIButton!
     
     @IBAction func stopButtonTapped(_ sender: Any) {
         clock.stopClock()
+        stopClockButton.isEnabled = false
+        if isCentral {
+            nextPlayer()
+        } else {
+            peripheral?.myTurnEnded()
+        }
     }
 
     override func viewDidLoad() {
@@ -30,7 +38,45 @@ class PlayGameViewController: UIViewController {
             self.timeLabel.text = timeString
         })
 
-        clock.startClock()
+        central?.playerTurnFinishedCallback = { player in
+            self.nextPlayer()
+        }
+
+        peripheral?.myTurnStartedCallback = { _ in
+            self.clock.startClock()
+            self.stopClockButton.isEnabled = true
+        }
+
+        stopClockButton.isEnabled = false
+
+        if isCentral {
+            nextPlayerIndex = 0
+            nextPlayer()
+        }
+    }
+
+    // Advances the turn to the next player
+    func nextPlayer() {
+        if let index = nextPlayerIndex, let players = players {
+            let player = players[index]
+            startPlayerTurn(player: player)
+
+            // Calculate next player index and update
+            if index == players.count - 1 {
+                nextPlayerIndex = 0
+            } else {
+                nextPlayerIndex = index + 1
+            }
+        }
+    }
+
+    func startPlayerTurn(player: Player) {
+        if player.peripheral == nil { // My turn
+            stopClockButton.isEnabled = true
+            clock.startClock()
+        } else { // One of my connected peripheral's turns
+            central?.startPlayerTurn(player: player)
+        }
     }
 
     override func didReceiveMemoryWarning() {

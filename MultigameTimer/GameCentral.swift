@@ -17,11 +17,15 @@ class GameCentral: NSObject {
     fileprivate var characteristics = [CBCharacteristic]()
     fileprivate var players = [Player]()
     fileprivate var connectedCallback: (([Player]) -> Void)?
+    var playerTurnFinishedCallback: ((Player) -> Void)?
 
     init(uuid: String, newConnected: @escaping ([Player]) -> Void) {
         gameUuid = CBUUID(string: uuid)
         connectedCallback = newConnected
         super.init()
+        let me = Player()
+        me.displayName = "Me"
+        players.append(me)
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
@@ -30,6 +34,19 @@ class GameCentral: NSObject {
         for char in characteristics {
             if char.uuid == Constants.StartPlayCharacteristic {
                 char.service.peripheral.writeValue("true".data(using: .ascii)!, for: char, type: .withResponse)
+            }
+        }
+    }
+
+    func startPlayerTurn(player: Player) {
+        guard let periph = player.peripheral else {
+            return
+        }
+
+        for char in characteristics {
+            if char.uuid == Constants.IsPlayerTurnCharacteristic {
+                // Write a value to the characteristic to start the turn
+                periph.writeValue("true".data(using: .ascii)!, for: char, type: .withResponse)
             }
         }
     }
@@ -86,6 +103,16 @@ extension GameCentral: CBPeripheralDelegate {
             print(error)
             return
         }
+
+        if characteristic.uuid == Constants.IsPlayerTurnCharacteristic {
+            let player = players.first(where: { player in
+                return peripheral == player.peripheral
+            })
+
+            if let player = player {
+                playerTurnFinishedCallback?(player)
+            }
+        }
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
@@ -98,5 +125,11 @@ extension GameCentral: CBPeripheralDelegate {
             return
         }
         self.characteristics.append(contentsOf: characteristics)
+
+        for char in characteristics {
+            if char.uuid == Constants.IsPlayerTurnCharacteristic {
+                peripheral.setNotifyValue(true, for: char)
+            }
+        }
     }
 }
