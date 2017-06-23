@@ -1010,4 +1010,7 @@ struct Constants {
 
     // Name of player that shows up in Central's list. Is this needed if advertised by default?
     static let PlayerNameCharacteristic = CBUUID(string: "ECDFEC0A-817F-4FAB-AFD6-A618B4ADD70E")
+
+    // Central subscribes to this, peripherals change it when pausing / resuming
+    static let IsPausedCharacteristic = CBUUID(string: "D3579C4D-D6DA-4F14-8094-C00D46AE2AF3")
 }

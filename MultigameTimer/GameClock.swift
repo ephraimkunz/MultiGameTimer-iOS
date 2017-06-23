@@ -13,24 +13,30 @@ let timerInterval = 1.0
 class GameClock {
     let initialTime: TimeInterval
     let increment: TimeInterval
-    let callback: ((String) -> Void)
+    let clockTickedCallback: (String) -> Void
+    let clockExpiredCallback: (Void) -> Void
     var timer = Timer()
+    var isActive: Bool {
+        return timer.isValid
+    }
 
     var time: TimeInterval
 
-    init(initialTime: TimeInterval, increment: TimeInterval, callback: @escaping (String) -> Void) {
+    init(initialTime: TimeInterval, increment: TimeInterval, clockTickedCallback: @escaping (String) -> Void, clockExpiredCallback: @escaping (Void) -> Void) {
         self.increment = increment
         self.initialTime = initialTime
-        self.callback = callback
+        self.clockTickedCallback = clockTickedCallback
+        self.clockExpiredCallback = clockExpiredCallback
         time = initialTime
     }
 
     @objc private func timerFired(timer: Timer) {
         time -= timerInterval
-        callback(formattedTimeRemaining())
+        clockTickedCallback(formattedTimeRemaining())
     }
 
     func startClock() {
+        time += increment
         timer = Timer.scheduledTimer(timeInterval: timerInterval, target: self, selector: #selector(timerFired), userInfo: nil, repeats: true)
     }
 

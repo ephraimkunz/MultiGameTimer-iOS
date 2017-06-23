@@ -41,6 +41,7 @@ class CreateGameViewController: UIViewController {
     func beginTapped(_ button: UIBarButtonItem) {
         print("beginTapped")
         central.startGame()
+
         let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PlayGameViewController") as! PlayGameViewController
         vc.central = self.central
         vc.players = self.players

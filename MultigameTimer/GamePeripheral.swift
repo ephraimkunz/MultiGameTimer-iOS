@@ -14,8 +14,11 @@ class GamePeripheral: NSObject {
     private var peripheralManager: CBPeripheralManager!
     private var gameStarted = false
     private var gameUuid: String!
-    var gameStartedCallback: ((Bool) -> Void)?
-    var myTurnStartedCallback: ((Void) -> Void)?
+    var gameStartedCallback: ((Bool) -> Void)? // This periph was notified that the game began
+    var myTurnStartedCallback: ((Void) -> Void)? // This peripheral was notified that they became the active player
+    var myTurnPauseToggledCallback: ((Bool) -> Void)? // This periph is notified that the pause state changed
+
+    var IsPausedCharacteristic: CBMutableCharacteristic?
     var IsPlayerTurnCharacteristic: CBMutableCharacteristic?
 
     init(uuid: String) {
@@ -33,16 +36,27 @@ class GamePeripheral: NSObject {
         peripheralManager.updateValue("false".data(using: .ascii)!, for: isPlayerTurnChar, onSubscribedCentrals: nil)
     }
 
+    func pauseStateChanged(paused: Bool) {
+        guard let isPausedChar = IsPausedCharacteristic else {
+            return
+        }
+
+        let stringValue = paused ? "true" : "false"
+        peripheralManager.updateValue(stringValue.data(using: .ascii)!, for: isPausedChar, onSubscribedCentrals: nil)
+    }
+
     func joinGame() {
         let startPlay = CBMutableCharacteristic(type: Constants.StartPlayCharacteristic, properties: .write, value: nil, permissions: .writeable)
         // Save this characteristic so we can update values for it later
         IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
 
+        IsPausedCharacteristic = CBMutableCharacteristic(type: Constants.IsPausedCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
+
         let name = UIDevice.current.name
         let playerName = CBMutableCharacteristic(type: Constants.PlayerNameCharacteristic, properties: .read, value: name.data(using: .ascii), permissions: .readable)
 
         let gameService = CBMutableService(type: CBUUID(string: gameUuid), primary: true)
-        gameService.characteristics = [startPlay, playerName, IsPlayerTurnCharacteristic!]
+        gameService.characteristics = [startPlay, playerName, IsPlayerTurnCharacteristic!, IsPausedCharacteristic!]
 
 
         peripheralManager.add(gameService)
@@ -73,10 +87,6 @@ extension GamePeripheral: CBPeripheralManagerDelegate {
         }
     }
 
-    func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
-
-    }
-
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
             if request.characteristic.uuid == Constants.StartPlayCharacteristic {
@@ -84,6 +94,12 @@ extension GamePeripheral: CBPeripheralManagerDelegate {
             }
             if request.characteristic.uuid == Constants.IsPlayerTurnCharacteristic {
                 myTurnStartedCallback?()
+            }
+            if request.characteristic.uuid == Constants.IsPausedCharacteristic {
+                if let value = request.value {
+                    let paused = String(data: value, encoding: .ascii) == "true" ? true : false
+                    myTurnPauseToggledCallback?(paused)
+                }
             }
         }
         peripheral.stopAdvertising()

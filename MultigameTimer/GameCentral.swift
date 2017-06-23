@@ -16,8 +16,9 @@ class GameCentral: NSObject {
     fileprivate var connected = [CBPeripheral]()
     fileprivate var characteristics = [CBCharacteristic]()
     fileprivate var players = [Player]()
-    fileprivate var connectedCallback: (([Player]) -> Void)?
-    var playerTurnFinishedCallback: ((Player) -> Void)?
+    fileprivate var connectedCallback: (([Player]) -> Void)? // New players connected, returns full list connected so far
+    var playerTurnFinishedCallback: ((Player) -> Void)? // Notified that a player has finished their turn, time to transisiton
+    var playerToggledPauseCallback: ((Bool) -> Void)? // Notified that a player (periph) has toggled pause
 
     init(uuid: String, newConnected: @escaping ([Player]) -> Void) {
         gameUuid = CBUUID(string: uuid)
@@ -32,8 +33,30 @@ class GameCentral: NSObject {
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
+    func pauseStateChanged(paused: Bool) {
+        let writeValue = paused ? "true" : "false"
+        for player in players {
+            if let periph = player.peripheral {
+                let service = periph.services!.first(where: { $0.uuid == gameUuid })
+                let char = service!.characteristics!.first(where: { $0.uuid == Constants.IsPausedCharacteristic })
+                periph.writeValue(writeValue.data(using: .ascii)!, for: char!, type: .withResponse)
+
+            }
+        }
+    }
+
     func startGame() {
         centralManager.stopScan()
+        for player in players {
+            if let periph = player.peripheral {
+                let service = periph.services!.first(where: { service in
+                    return service.uuid == gameUuid
+                })
+                let char = service!.characteristics?.first(where: { $0.uuid == Constants.IsPausedCharacteristic})
+                periph.setNotifyValue(true, for: char!)
+            }
+        }
+
         for char in characteristics {
             if char.uuid == Constants.StartPlayCharacteristic {
                 char.service.peripheral.writeValue("true".data(using: .ascii)!, for: char, type: .withResponse)
@@ -103,7 +126,7 @@ extension GameCentral: CBPeripheralDelegate {
 
         for service in services {
             if service.uuid == gameUuid {
-                peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic], for: service)
+                peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic, Constants.IsPausedCharacteristic], for: service)
             }
         }
     }
@@ -122,6 +145,8 @@ extension GameCentral: CBPeripheralDelegate {
             if let player = player {
                 playerTurnFinishedCallback?(player)
             }
+        } else if characteristic.uuid == Constants.IsPausedCharacteristic {
+            
         }
     }
 
