@@ -67,6 +67,23 @@ class PlayGameViewController: UIViewController {
         }
 
         central?.playerToggledPauseCallback = { paused in
+            if paused {
+                self.wasLastActiveBeforePause = false
+                if self.clock.isActive {
+                    self.wasLastActiveBeforePause = true
+                    // I am the active player
+                    self.clock.stopClock()
+                }
+                self.enablePauseMode()
+            } else {
+                if self.wasLastActiveBeforePause {
+                    self.wasLastActiveBeforePause = false
+                    self.clock.startClock()
+                    self.stopClockButton.isEnabled = true
+                }
+                self.disablePauseMode()
+            }
+
             self.notifyOthersOfPauseChange(paused: paused)
         }
 
