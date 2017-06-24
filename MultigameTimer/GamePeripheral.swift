@@ -45,6 +45,7 @@ class GamePeripheral: NSObject {
         peripheralManager.updateValue("false".data(using: .ascii)!, for: isPlayerTurnChar, onSubscribedCentrals: nil)
     }
 
+    // Let central know that this device is trying to pause/resume the game
     func pauseStateChanged(paused: Bool) {
         guard let isPausedChar = IsPausedCharacteristic else {
             return
@@ -56,9 +57,9 @@ class GamePeripheral: NSObject {
 
     func joinGame() {
         let startPlay = CBMutableCharacteristic(type: Constants.StartPlayCharacteristic, properties: .write, value: nil, permissions: .writeable)
-        // Save this characteristic so we can update values for it later
-        IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
 
+        // Save these characteristics so we can update values for them later
+        IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
         IsPausedCharacteristic = CBMutableCharacteristic(type: Constants.IsPausedCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
 
         let name = UIDevice.current.name
@@ -78,9 +79,11 @@ class GamePeripheral: NSObject {
 
 extension GamePeripheral: CBPeripheralManagerDelegate {
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
-        print(peripheral.state.rawValue)
-        if peripheral.state == .poweredOn {
+        switch peripheral.state {
+        case .poweredOn:
             joinGame()
+        default:
+            print("Peripheral is in state \(peripheral.state)")
         }
     }
 
@@ -111,6 +114,8 @@ extension GamePeripheral: CBPeripheralManagerDelegate {
                 }
             }
         }
+
+        // The only time a write happens is if a central is connected. In this case, we are good to go.
         peripheral.stopAdvertising()
     }
 

@@ -8,7 +8,7 @@
 
 import Foundation
 
-let timerInterval = 1.0
+let timerInterval = 1.0 // How often we run the timerFired method. Lower = better timer accuracy / worse battery life / dealing with fractions of a second
 
 class GameClock {
     let initialTime: TimeInterval

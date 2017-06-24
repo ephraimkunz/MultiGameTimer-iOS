@@ -24,15 +24,9 @@ protocol GamePlayCentralDelegate {
 class GameCentral: NSObject {
     fileprivate var centralManager: CBCentralManager!
     fileprivate var gameUuid: CBUUID
-    internal var gameSetupDelegate: GameSetupCentralDelegate? { // Should delegate be weak?
-        willSet {
-            gameSetupDelegate?.connectedPlayersDidChange(players: players) // Call delegate as soon as it is set to show player "Me" right away
-        }
-    }
-
+    internal var gameSetupDelegate: GameSetupCentralDelegate?  // Should delegate be weak?
     internal var gamePlayDelegate: GamePlayCentralDelegate?
 
-    fileprivate var discovered = [CBPeripheral]()
     fileprivate var players = [Player]()
 
     init(uuid: String) {
@@ -46,10 +40,17 @@ class GameCentral: NSObject {
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
-    func pauseStateChanged(paused: Bool) {
+    func pauseStateChanged(paused: Bool, exclude: Player?) {
         let writeValue = paused ? "true" : "false"
+        
+        // Tell all the players that I'm trying to pause/resume the game
         for player in players {
-            if let periph = player.peripheral {
+            if let exclude = exclude {
+                if exclude === player {
+                    continue
+                }
+            }
+            if let periph = player.peripheral { // Don't tell myself
                 let service = periph.services!.first(where: { $0.uuid == gameUuid })
                 let char = service!.characteristics!.first(where: { $0.uuid == Constants.IsPausedCharacteristic })
                 periph.writeValue(writeValue.data(using: .ascii)!, for: char!, type: .withResponse)
@@ -61,12 +62,10 @@ class GameCentral: NSObject {
     func startGame() {
         centralManager.stopScan()
         for player in players {
-            if let periph = player.peripheral {
-                let service = periph.services!.first(where: { service in
-                    return service.uuid == gameUuid
-                })
+            if let periph = player.peripheral { // Don't tell myself
+                let service = periph.services!.first(where: { $0.uuid == gameUuid })
                 let pauseChar = service!.characteristics?.first(where: { $0.uuid == Constants.IsPausedCharacteristic})
-                periph.setNotifyValue(true, for: pauseChar!)
+                periph.setNotifyValue(true, for: pauseChar!) // Set up so game players can notify me later when they pause / resume
 
                 let startPlayChar = service!.characteristics?.first(where: { $0.uuid == Constants.StartPlayCharacteristic})
                 periph.writeValue("true".data(using: .ascii)!, for: startPlayChar!, type: .withResponse)
@@ -75,30 +74,23 @@ class GameCentral: NSObject {
     }
 
     func startPlayerTurn(player: Player) {
-        guard let periph = player.peripheral, let services = periph.services else {
+        guard let periph = player.peripheral else {
             return
         }
 
-        for service in services {
-            guard let characteristics = service.characteristics else {
-                return
-            }
-
-            for char in characteristics {
-                if char.uuid == Constants.IsPlayerTurnCharacteristic {
-                    // Write a value to the characteristic to start the turn
-                    periph.writeValue("true".data(using: .ascii)!, for: char, type: .withResponse)
-                }
-            }
-        }
+        let service = periph.services!.first(where: { $0.uuid == gameUuid })
+        let char = service!.characteristics?.first(where: { $0.uuid == Constants.IsPlayerTurnCharacteristic })
+        periph.writeValue("true".data(using: .ascii)!, for: char!, type: .withResponse)
     }
 }
 
 extension GameCentral: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        print(central.state)
-        if central.state == .poweredOn {
+        switch central.state {
+        case .poweredOn:
             central.scanForPeripherals(withServices: [gameUuid], options: nil)
+        default:
+            print("Central is in state \(central.state)")
         }
     }
 
@@ -107,12 +99,11 @@ extension GameCentral: CBCentralManagerDelegate {
             return
         }
 
-        discovered.append(peripheral)
         let player = Player()
         player.displayName = name
         player.peripheral = peripheral
         players.append(player)
-        gameSetupDelegate?.connectedPlayersDidChange(players: players)
+        gameSetupDelegate?.connectedPlayersDidChange(players: players) // Technically we haven't connected yet, but we need to get the name here.
         peripheral.delegate = self
         central.connect(peripheral, options: nil)
     }
@@ -129,15 +120,8 @@ extension GameCentral: CBPeripheralDelegate {
             return
         }
 
-        guard let services = peripheral.services else {
-            return
-        }
-
-        for service in services {
-            if service.uuid == gameUuid {
-                peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic, Constants.IsPausedCharacteristic], for: service)
-            }
-        }
+        let service = peripheral.services!.first(where: { $0.uuid == gameUuid })
+        peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic, Constants.IsPausedCharacteristic], for: service!)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -147,15 +131,17 @@ extension GameCentral: CBPeripheralDelegate {
         }
 
         if characteristic.uuid == Constants.IsPlayerTurnCharacteristic {
-            let player = players.first(where: { player in
-                return peripheral == player.peripheral
-            })
+            let player = players.first(where: { peripheral == $0.peripheral })
 
             if let player = player {
                 gamePlayDelegate?.playerTurnDidFinish(player: player)
             }
         } else if characteristic.uuid == Constants.IsPausedCharacteristic {
-            
+            let player = players.first(where: { $0.peripheral?.identifier == peripheral.identifier })
+            if let data = characteristic.value, let value = String(data: data, encoding: .ascii), let player = player {
+                let isPaused = value == "true"
+                gamePlayDelegate?.playerDidTogglePause(player: player, isPaused: isPaused)
+            }
         }
     }
 
@@ -169,10 +155,7 @@ extension GameCentral: CBPeripheralDelegate {
             return
         }
 
-        for char in characteristics {
-            if char.uuid == Constants.IsPlayerTurnCharacteristic {
-                peripheral.setNotifyValue(true, for: char)
-            }
-        }
+        let char = characteristics.first(where: { $0.uuid == Constants.IsPlayerTurnCharacteristic })
+        peripheral.setNotifyValue(true, for: char!)
     }
 }

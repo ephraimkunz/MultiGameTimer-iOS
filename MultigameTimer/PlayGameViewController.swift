@@ -19,7 +19,7 @@ class PlayGameViewController: UIViewController {
             return central != nil
     }
 
-    var wasLastActiveBeforePause = false
+    var clockStoppedOnPause = false
 
     @IBOutlet weak var timeLabel: UILabel!
     @IBOutlet weak var stopClockButton: UIButton!
@@ -28,15 +28,24 @@ class PlayGameViewController: UIViewController {
 
     @IBAction func pauseButtonTapped(_ sender: Any) {
         if pauseButton.titleLabel?.text == "Pause" {
-            pauseButton.titleLabel?.text = "Play"
-            pauseLabel.text = "Paused"
+            pauseButton.setTitle("Play", for: .normal)
             pauseLabel.isHidden = false
-            clock.stopClock()
-            notifyOthersOfPauseChange(paused: true)
+
+            if clock.isActive {
+                clockStoppedOnPause = true
+                clock.stopClock()
+                stopClockButton.isEnabled = false
+            }
+            notifyOthersOfPauseChange(paused: true, exlude: nil)
         } else {
-            pauseButton.titleLabel?.text = "Pause"
+            if clockStoppedOnPause {
+                clockStoppedOnPause = false
+                clock.startClock()
+                stopClockButton.isEnabled = true
+            }
+            pauseButton.setTitle("Pause", for: .normal)
             pauseLabel.isHidden = true
-            notifyOthersOfPauseChange(paused: false)
+            notifyOthersOfPauseChange(paused: false, exlude: nil)
         }
     }
     
@@ -52,6 +61,8 @@ class PlayGameViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        pauseLabel.isHidden = true
 
         clock = GameClock(initialTime: 60 * 1, increment: 0, clockTickedCallback: { timeString in
             self.timeLabel.text = timeString
@@ -76,27 +87,27 @@ class PlayGameViewController: UIViewController {
 
     // This device needs to notify other devices that the local pause state changed.
     // If this device is the central, needs to tell periphs. If a periph, needs to tell central
-    func notifyOthersOfPauseChange(paused: Bool) {
+
+    // exclude is a player we want to exclude, for the case when this method is called by the central after
+    // being notified that a peripheral paused the game. We want the central to not notify that peripheral again.
+    func notifyOthersOfPauseChange(paused: Bool, exlude: Player?) {
         if isCentral {
-            central?.pauseStateChanged(paused: paused)
+            central?.pauseStateChanged(paused: paused, exclude: exlude)
         } else {
             peripheral?.pauseStateChanged(paused: paused)
         }
     }
 
-    // Other device (cental) told this device to disable pause mode
+    // Other device (cental) told this device to disable pause mode (resume play)
     func disablePauseMode() {
-        pauseLabel.text = "Someone else paused me"
-        pauseLabel.isHidden = false
-        pauseButton.isEnabled = false
-        stopClockButton.isEnabled = false
+        pauseLabel.isHidden = true
+        pauseButton.isEnabled = true
     }
 
     // Other device (central) told this device to enable pause mode
     func enablePauseMode() {
-        pauseLabel.isHidden = true
-        pauseButton.isEnabled = true
-        // Enable stop clock button?
+        pauseLabel.isHidden = false
+        pauseButton.isEnabled = false
     }
 
     // Advances the turn to the next player
@@ -140,23 +151,22 @@ extension PlayGameViewController: GamePlayCentralDelegate {
 
     func playerDidTogglePause(player: Player, isPaused: Bool) {
         if isPaused {
-            wasLastActiveBeforePause = false
             if clock.isActive {
-                wasLastActiveBeforePause = true
-                // I am the active player
+                clockStoppedOnPause = true
                 clock.stopClock()
+                stopClockButton.isEnabled = false
             }
             enablePauseMode()
         } else {
-            if wasLastActiveBeforePause {
-                wasLastActiveBeforePause = false
+            if clockStoppedOnPause {
                 clock.startClock()
+                clockStoppedOnPause = false
                 stopClockButton.isEnabled = true
             }
             disablePauseMode()
         }
 
-        notifyOthersOfPauseChange(paused: isPaused)
+        notifyOthersOfPauseChange(paused: isPaused, exlude: player)
     }
 }
 
@@ -168,16 +178,15 @@ extension PlayGameViewController: GamePlayPeripheralDelegate {
 
     func pauseWasToggled(isPaused: Bool) {
         if isPaused {
-            wasLastActiveBeforePause = false
             if clock.isActive {
-                wasLastActiveBeforePause = true
-                // I am the active player
                 clock.stopClock()
+                clockStoppedOnPause = true
+                stopClockButton.isEnabled = false
             }
             enablePauseMode()
         } else {
-            if wasLastActiveBeforePause {
-                wasLastActiveBeforePause = false
+            if clockStoppedOnPause {
+                clockStoppedOnPause = false
                 clock.startClock()
                 stopClockButton.isEnabled = true
             }
