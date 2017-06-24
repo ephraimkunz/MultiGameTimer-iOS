@@ -23,10 +23,8 @@ class CreateGameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        central = GameCentral(uuid: gameId, newConnected: { allPlayers in
-            self.players = allPlayers
-            self.tableView.reloadData()
-        })
+        central = GameCentral(uuid: gameId)
+        central.gameSetupDelegate = self
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Begin", style: .plain, target: self, action: #selector(beginTapped))
         tableView.delegate = self
@@ -47,6 +45,13 @@ class CreateGameViewController: UIViewController {
         vc.players = self.players
         self.navigationController?.pushViewController(vc, animated: true)
 
+    }
+}
+
+extension CreateGameViewController: GameSetupCentralDelegate {
+    func connectedPlayersDidChange(players: [Player]) {
+        self.players = players
+        tableView.reloadData()
     }
 }
 

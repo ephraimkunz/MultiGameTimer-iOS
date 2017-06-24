@@ -9,26 +9,39 @@
 import Foundation
 import CoreBluetooth
 
+protocol GameSetupCentralDelegate {
+    func connectedPlayersDidChange(players: [Player]) // New players connected, returns full list connected so far
+}
+
+protocol GamePlayCentralDelegate {
+    func playerTurnDidFinish(player: Player) // Notified that a player has finished their turn, time to transisiton
+
+    func playerDidTogglePause(player: Player, isPaused: Bool) // Notified that a player (periph) has toggled pause
+
+    func playerDidExitGame(player: Player) // Notified that a player just exited the game
+}
+
 class GameCentral: NSObject {
     fileprivate var centralManager: CBCentralManager!
     fileprivate var gameUuid: CBUUID
-    fileprivate var discovered = [CBPeripheral]()
-    fileprivate var connected = [CBPeripheral]()
-    fileprivate var characteristics = [CBCharacteristic]()
-    fileprivate var players = [Player]()
-    fileprivate var connectedCallback: (([Player]) -> Void)? // New players connected, returns full list connected so far
-    var playerTurnFinishedCallback: ((Player) -> Void)? // Notified that a player has finished their turn, time to transisiton
-    var playerToggledPauseCallback: ((Bool) -> Void)? // Notified that a player (periph) has toggled pause
+    internal var gameSetupDelegate: GameSetupCentralDelegate? { // Should delegate be weak?
+        willSet {
+            gameSetupDelegate?.connectedPlayersDidChange(players: players) // Call delegate as soon as it is set to show player "Me" right away
+        }
+    }
 
-    init(uuid: String, newConnected: @escaping ([Player]) -> Void) {
+    internal var gamePlayDelegate: GamePlayCentralDelegate?
+
+    fileprivate var discovered = [CBPeripheral]()
+    fileprivate var players = [Player]()
+
+    init(uuid: String) {
         gameUuid = CBUUID(string: uuid)
-        connectedCallback = newConnected
         super.init()
 
         let me = Player()
         me.displayName = "Me"
         players.append(me)
-        connectedCallback?(players) // Show "Me" right away
 
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
@@ -52,14 +65,11 @@ class GameCentral: NSObject {
                 let service = periph.services!.first(where: { service in
                     return service.uuid == gameUuid
                 })
-                let char = service!.characteristics?.first(where: { $0.uuid == Constants.IsPausedCharacteristic})
-                periph.setNotifyValue(true, for: char!)
-            }
-        }
+                let pauseChar = service!.characteristics?.first(where: { $0.uuid == Constants.IsPausedCharacteristic})
+                periph.setNotifyValue(true, for: pauseChar!)
 
-        for char in characteristics {
-            if char.uuid == Constants.StartPlayCharacteristic {
-                char.service.peripheral.writeValue("true".data(using: .ascii)!, for: char, type: .withResponse)
+                let startPlayChar = service!.characteristics?.first(where: { $0.uuid == Constants.StartPlayCharacteristic})
+                periph.writeValue("true".data(using: .ascii)!, for: startPlayChar!, type: .withResponse)
             }
         }
     }
@@ -102,7 +112,7 @@ extension GameCentral: CBCentralManagerDelegate {
         player.displayName = name
         player.peripheral = peripheral
         players.append(player)
-        connectedCallback?(players)
+        gameSetupDelegate?.connectedPlayersDidChange(players: players)
         peripheral.delegate = self
         central.connect(peripheral, options: nil)
     }
@@ -110,7 +120,6 @@ extension GameCentral: CBCentralManagerDelegate {
 
 extension GameCentral: CBPeripheralDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        connected.append(peripheral)
         peripheral.discoverServices([gameUuid])
     }
 
@@ -143,7 +152,7 @@ extension GameCentral: CBPeripheralDelegate {
             })
 
             if let player = player {
-                playerTurnFinishedCallback?(player)
+                gamePlayDelegate?.playerTurnDidFinish(player: player)
             }
         } else if characteristic.uuid == Constants.IsPausedCharacteristic {
             
@@ -159,7 +168,6 @@ extension GameCentral: CBPeripheralDelegate {
         guard let characteristics = service.characteristics else {
             return
         }
-        self.characteristics.append(contentsOf: characteristics)
 
         for char in characteristics {
             if char.uuid == Constants.IsPlayerTurnCharacteristic {

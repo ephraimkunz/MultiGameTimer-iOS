@@ -10,13 +10,22 @@ import Foundation
 import CoreBluetooth
 import UIKit
 
+protocol GamePlayPeripheralDelegate {
+    func turnDidStart() // This peripheral was notified that they became the active player
+
+    func pauseWasToggled(isPaused: Bool) // This periph is notified that the pause state changed
+}
+
+protocol GameSetupPeripheralDelegate {
+    func gameDidStart() // This periph was notified that the game began
+}
+
 class GamePeripheral: NSObject {
     private var peripheralManager: CBPeripheralManager!
     private var gameStarted = false
     private var gameUuid: String!
-    var gameStartedCallback: ((Bool) -> Void)? // This periph was notified that the game began
-    var myTurnStartedCallback: ((Void) -> Void)? // This peripheral was notified that they became the active player
-    var myTurnPauseToggledCallback: ((Bool) -> Void)? // This periph is notified that the pause state changed
+    internal var gamePlayDelegate: GamePlayPeripheralDelegate?
+    internal var gameSetupDelegate: GameSetupPeripheralDelegate?
 
     var IsPausedCharacteristic: CBMutableCharacteristic?
     var IsPlayerTurnCharacteristic: CBMutableCharacteristic?
@@ -90,15 +99,15 @@ extension GamePeripheral: CBPeripheralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
             if request.characteristic.uuid == Constants.StartPlayCharacteristic {
-                gameStartedCallback?(true)
+                gameSetupDelegate?.gameDidStart()
             }
             if request.characteristic.uuid == Constants.IsPlayerTurnCharacteristic {
-                myTurnStartedCallback?()
+                gamePlayDelegate?.turnDidStart()
             }
             if request.characteristic.uuid == Constants.IsPausedCharacteristic {
                 if let value = request.value {
                     let paused = String(data: value, encoding: .ascii) == "true" ? true : false
-                    myTurnPauseToggledCallback?(paused)
+                    gamePlayDelegate?.pauseWasToggled(isPaused: paused)
                 }
             }
         }

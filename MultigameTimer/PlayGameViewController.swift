@@ -59,57 +59,12 @@ class PlayGameViewController: UIViewController {
             // Handle clock expiration: eject the player from the game
         })
 
+
         // Set initial time label, as it may be some time before this player gets to go
         self.timeLabel.text = clock.formattedTimeRemaining()
 
-        central?.playerTurnFinishedCallback = { player in
-            self.nextPlayer()
-        }
-
-        central?.playerToggledPauseCallback = { paused in
-            if paused {
-                self.wasLastActiveBeforePause = false
-                if self.clock.isActive {
-                    self.wasLastActiveBeforePause = true
-                    // I am the active player
-                    self.clock.stopClock()
-                }
-                self.enablePauseMode()
-            } else {
-                if self.wasLastActiveBeforePause {
-                    self.wasLastActiveBeforePause = false
-                    self.clock.startClock()
-                    self.stopClockButton.isEnabled = true
-                }
-                self.disablePauseMode()
-            }
-
-            self.notifyOthersOfPauseChange(paused: paused)
-        }
-
-        peripheral?.myTurnStartedCallback = { _ in
-            self.clock.startClock()
-            self.stopClockButton.isEnabled = true
-        }
-
-        peripheral?.myTurnPauseToggledCallback = { paused in
-            if paused {
-                self.wasLastActiveBeforePause = false
-                if self.clock.isActive {
-                    self.wasLastActiveBeforePause = true
-                    // I am the active player
-                    self.clock.stopClock()
-                }
-                self.enablePauseMode()
-            } else {
-                if self.wasLastActiveBeforePause {
-                    self.wasLastActiveBeforePause = false
-                    self.clock.startClock()
-                    self.stopClockButton.isEnabled = true
-                }
-                self.disablePauseMode()
-            }
-        }
+        central?.gamePlayDelegate = self
+        peripheral?.gamePlayDelegate = self
 
         stopClockButton.isEnabled = false
 
@@ -170,5 +125,63 @@ class PlayGameViewController: UIViewController {
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
+    }
+}
+
+extension PlayGameViewController: GamePlayCentralDelegate {
+
+    func playerDidExitGame(player: Player) {
+        
+    }
+
+    func playerTurnDidFinish(player: Player) {
+        nextPlayer()
+    }
+
+    func playerDidTogglePause(player: Player, isPaused: Bool) {
+        if isPaused {
+            wasLastActiveBeforePause = false
+            if clock.isActive {
+                wasLastActiveBeforePause = true
+                // I am the active player
+                clock.stopClock()
+            }
+            enablePauseMode()
+        } else {
+            if wasLastActiveBeforePause {
+                wasLastActiveBeforePause = false
+                clock.startClock()
+                stopClockButton.isEnabled = true
+            }
+            disablePauseMode()
+        }
+
+        notifyOthersOfPauseChange(paused: isPaused)
+    }
+}
+
+extension PlayGameViewController: GamePlayPeripheralDelegate {
+    func turnDidStart() {
+        clock.startClock()
+        stopClockButton.isEnabled = true
+    }
+
+    func pauseWasToggled(isPaused: Bool) {
+        if isPaused {
+            wasLastActiveBeforePause = false
+            if clock.isActive {
+                wasLastActiveBeforePause = true
+                // I am the active player
+                clock.stopClock()
+            }
+            enablePauseMode()
+        } else {
+            if wasLastActiveBeforePause {
+                wasLastActiveBeforePause = false
+                clock.startClock()
+                stopClockButton.isEnabled = true
+            }
+            disablePauseMode()
+        }
     }
 }

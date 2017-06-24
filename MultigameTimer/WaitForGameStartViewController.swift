@@ -18,30 +18,19 @@ class WaitForGameStartViewController: UIViewController {
         super.viewDidLoad()
         activitiyIndicator.startAnimating()
         startedLabel.text = "Waiting for game to start"
-        
-        peripheral.gameStartedCallback = { started in
-            if started {
-                let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PlayGameViewController") as! PlayGameViewController
-                vc.peripheral = self.peripheral
-                self.navigationController?.pushViewController(vc, animated: true)
-            }
-        }
+        peripheral.gameSetupDelegate = self
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
+}
 
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+extension WaitForGameStartViewController: GameSetupPeripheralDelegate {
+    func gameDidStart() {
+        let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PlayGameViewController") as! PlayGameViewController
+        vc.peripheral = peripheral
+        navigationController?.pushViewController(vc, animated: true)
     }
-    */
-
 }
