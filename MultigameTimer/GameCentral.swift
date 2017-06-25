@@ -40,6 +40,10 @@ class GameCentral: NSObject {
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
+    func stopScanning() {
+        centralManager.stopScan()
+    }
+
     func pauseStateChanged(paused: Bool, exclude: Player?) {
         let writeValue = paused ? "true" : "false"
         
@@ -59,16 +63,21 @@ class GameCentral: NSObject {
         }
     }
 
-    func startGame() {
+    func startGame(startTime: Int, incrementTime: Int) {
         centralManager.stopScan()
         for player in players {
             if let periph = player.peripheral { // Don't tell myself
                 let service = periph.services!.first(where: { $0.uuid == gameUuid })
+
                 let pauseChar = service!.characteristics?.first(where: { $0.uuid == Constants.IsPausedCharacteristic})
                 periph.setNotifyValue(true, for: pauseChar!) // Set up so game players can notify me later when they pause / resume
 
                 let startPlayChar = service!.characteristics?.first(where: { $0.uuid == Constants.StartPlayCharacteristic})
-                periph.writeValue("true".data(using: .ascii)!, for: startPlayChar!, type: .withResponse)
+                periph.writeValue("\(startTime):\(incrementTime)".data(using: .ascii)!, for: startPlayChar!, type: .withResponse)
+
+                let timeExpiredChar = service!.characteristics?.first(where: { $0.uuid == Constants.IsPlayerTimeExpiredCharacteristic })
+
+                periph.setNotifyValue(true, for: timeExpiredChar!)
             }
         }
     }
@@ -121,7 +130,7 @@ extension GameCentral: CBPeripheralDelegate {
         }
 
         let service = peripheral.services!.first(where: { $0.uuid == gameUuid })
-        peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic, Constants.IsPausedCharacteristic], for: service!)
+        peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic, Constants.IsPausedCharacteristic, Constants.IsPlayerTimeExpiredCharacteristic], for: service!)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -142,6 +151,12 @@ extension GameCentral: CBPeripheralDelegate {
                 let isPaused = value == "true"
                 gamePlayDelegate?.playerDidTogglePause(player: player, isPaused: isPaused)
             }
+        } else if characteristic.uuid == Constants.IsPlayerTimeExpiredCharacteristic {
+            let index = players.index(where: { $0.peripheral === peripheral })
+            let player = players[index!]
+            players.remove(at: index!)
+            centralManager.cancelPeripheralConnection(peripheral)
+            gamePlayDelegate?.playerDidExitGame(player: player)
         }
     }
 

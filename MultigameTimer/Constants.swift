@@ -1002,7 +1002,11 @@ struct Constants {
         "1b4f7e10-536b-11e7-9598-0800200c9a66",
         ]
 
-    // Central notifies peripherals that game is starting
+    // Central notifies peripherals that game is starting. We need to tell peripherals what time to set their clocks at
+    // initially, and what the increment should be each turn. The problem is the unreliable ordering of bluetooth writes.
+    // Because we can't ensure that these times and the start command, although sent at the same time, arrive at the same time,
+    // we overload this characteristic. We will send the start and increment times as startTime:incrementTime. When the
+    // periph detects the value is written, it will know to start the game. This makes the start game operation atomic.
     static let StartPlayCharacteristic = CBUUID(string: "B4F9CD98-8484-47B8-AED8-014018816A19")
 
     // Central sets to true to notify periph it is there turn, and subscribes to a change. Periph sets to false when they finish their turn.
@@ -1013,4 +1017,7 @@ struct Constants {
 
     // Central subscribes to this, peripherals change it when pausing / resuming
     static let IsPausedCharacteristic = CBUUID(string: "D3579C4D-D6DA-4F14-8094-C00D46AE2AF3")
+
+    // Central subscribes to this, peripherals write to it when their time expires
+    static let IsPlayerTimeExpiredCharacteristic = CBUUID(string: "CA560697-3EE9-48E8-B2EC-BCD1BEF772AD")
 }

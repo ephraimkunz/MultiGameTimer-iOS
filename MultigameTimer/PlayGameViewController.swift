@@ -19,6 +19,8 @@ class PlayGameViewController: UIViewController {
             return central != nil
     }
 
+    var startTime: Int!
+    var incrementTime: Int!
     var clockStoppedOnPause = false
 
     @IBOutlet weak var timeLabel: UILabel!
@@ -29,6 +31,8 @@ class PlayGameViewController: UIViewController {
     @IBAction func pauseButtonTapped(_ sender: Any) {
         if pauseButton.titleLabel?.text == "Pause" {
             setStateForPause(isPaused: true)
+            // Above call hides pause button, but we want it to show. So fix that below
+            pauseButton.isEnabled = true
             notifyOthersOfPauseChange(paused: true, exlude: nil)
         } else {
             setStateForPause(isPaused: false)
@@ -51,10 +55,15 @@ class PlayGameViewController: UIViewController {
 
         pauseLabel.isHidden = true
 
-        clock = GameClock(initialTime: 60 * 1, increment: 0, clockTickedCallback: { timeString in
+        clock = GameClock(initialTime: TimeInterval(startTime), increment: TimeInterval(incrementTime), clockTickedCallback: { timeString in
             self.timeLabel.text = timeString
         }, clockExpiredCallback: { _ in
             // Handle clock expiration: eject the player from the game
+            if self.isCentral {
+                // Not really sure how to handle this. Transfer all players to a new central?
+            } else {
+                self.peripheral?.myTimeExpired()
+            }
         })
 
 
@@ -149,7 +158,16 @@ class PlayGameViewController: UIViewController {
 extension PlayGameViewController: GamePlayCentralDelegate {
 
     func playerDidExitGame(player: Player) {
-        
+        // First remove from our local list of players
+        let index = players?.index(where: { $0 === player })
+        players?.remove(at: index!)
+
+        // Check for the case where nextPlayerIndex is now too large (this was second to last before wrap around to front)
+        if nextPlayerIndex! > players!.count - 1 {
+            nextPlayerIndex = 0
+        }
+
+        nextPlayer()
     }
 
     func playerTurnDidFinish(player: Player) {

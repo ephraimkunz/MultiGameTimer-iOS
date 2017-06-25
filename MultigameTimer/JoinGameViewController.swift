@@ -34,6 +34,10 @@ class JoinGameViewController: UIViewController {
         joinGameButton.isEnabled = false
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        gameIdField.becomeFirstResponder()
+    }
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.

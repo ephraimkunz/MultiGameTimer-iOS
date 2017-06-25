@@ -28,9 +28,11 @@ class WaitForGameStartViewController: UIViewController {
 }
 
 extension WaitForGameStartViewController: GameSetupPeripheralDelegate {
-    func gameDidStart() {
+    func gameDidStart(start: Int, increment: Int) {
         let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PlayGameViewController") as! PlayGameViewController
         vc.peripheral = peripheral
+        vc.startTime = start
+        vc.incrementTime = increment
         navigationController?.pushViewController(vc, animated: true)
     }
 }

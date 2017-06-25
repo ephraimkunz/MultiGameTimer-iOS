@@ -33,6 +33,10 @@ class GameClock {
     @objc private func timerFired(timer: Timer) {
         time -= timerInterval
         clockTickedCallback(formattedTimeRemaining())
+        if time <= 0 {
+            stopClock()
+            clockExpiredCallback()
+        }
     }
 
     func startClock() {

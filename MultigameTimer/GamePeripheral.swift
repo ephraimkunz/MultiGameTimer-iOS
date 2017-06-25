@@ -17,7 +17,7 @@ protocol GamePlayPeripheralDelegate {
 }
 
 protocol GameSetupPeripheralDelegate {
-    func gameDidStart() // This periph was notified that the game began
+    func gameDidStart(start: Int, increment: Int) // This periph was notified that the game began with start and increment seconds
 }
 
 class GamePeripheral: NSObject {
@@ -29,6 +29,7 @@ class GamePeripheral: NSObject {
 
     var IsPausedCharacteristic: CBMutableCharacteristic?
     var IsPlayerTurnCharacteristic: CBMutableCharacteristic?
+    var IsTimeExpiredCharacteristic: CBMutableCharacteristic?
 
     init(uuid: String) {
         super.init()
@@ -43,6 +44,10 @@ class GamePeripheral: NSObject {
         }
 
         peripheralManager.updateValue("false".data(using: .ascii)!, for: isPlayerTurnChar, onSubscribedCentrals: nil)
+    }
+
+    func myTimeExpired() {
+        peripheralManager.updateValue("true".data(using: .ascii)!, for: IsTimeExpiredCharacteristic!, onSubscribedCentrals: nil)
     }
 
     // Let central know that this device is trying to pause/resume the game
@@ -61,12 +66,13 @@ class GamePeripheral: NSObject {
         // Save these characteristics so we can update values for them later
         IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
         IsPausedCharacteristic = CBMutableCharacteristic(type: Constants.IsPausedCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
+        IsTimeExpiredCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTimeExpiredCharacteristic, properties: [.notify], value: nil, permissions: .readable)
 
         let name = UIDevice.current.name
         let playerName = CBMutableCharacteristic(type: Constants.PlayerNameCharacteristic, properties: .read, value: name.data(using: .ascii), permissions: .readable)
 
         let gameService = CBMutableService(type: CBUUID(string: gameUuid), primary: true)
-        gameService.characteristics = [startPlay, playerName, IsPlayerTurnCharacteristic!, IsPausedCharacteristic!]
+        gameService.characteristics = [startPlay, playerName, IsPlayerTurnCharacteristic!, IsPausedCharacteristic!, IsTimeExpiredCharacteristic!]
 
 
         peripheralManager.add(gameService)
@@ -102,7 +108,11 @@ extension GamePeripheral: CBPeripheralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
             if request.characteristic.uuid == Constants.StartPlayCharacteristic {
-                gameSetupDelegate?.gameDidStart()
+                let value = String(data: request.value!, encoding: .ascii)!
+                let parts = value.components(separatedBy: ":")
+                let startSeconds = parts[0]
+                let incSeconds = parts[1]
+                gameSetupDelegate?.gameDidStart(start: Int(startSeconds)!, increment: Int(incSeconds)!)
             }
             if request.characteristic.uuid == Constants.IsPlayerTurnCharacteristic {
                 gamePlayDelegate?.turnDidStart()
