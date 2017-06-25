@@ -27,6 +27,8 @@ class GameCentral: NSObject {
     internal var gameSetupDelegate: GameSetupCentralDelegate?  // Should delegate be weak?
     internal var gamePlayDelegate: GamePlayCentralDelegate?
 
+    let charsToDiscover = [Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic, Constants.IsPausedCharacteristic, Constants.IsPlayerTimeExpiredCharacteristic]
+
     fileprivate var players = [Player]()
 
     init(uuid: String) {
@@ -76,8 +78,10 @@ class GameCentral: NSObject {
                 periph.writeValue("\(startTime):\(incrementTime)".data(using: .ascii)!, for: startPlayChar!, type: .withResponse)
 
                 let timeExpiredChar = service!.characteristics?.first(where: { $0.uuid == Constants.IsPlayerTimeExpiredCharacteristic })
-
                 periph.setNotifyValue(true, for: timeExpiredChar!)
+
+                let char = service!.characteristics?.first(where: { $0.uuid == Constants.IsPlayerTurnCharacteristic })
+                periph.setNotifyValue(true, for: char!)
             }
         }
     }
@@ -112,7 +116,7 @@ extension GameCentral: CBCentralManagerDelegate {
         player.displayName = name
         player.peripheral = peripheral
         players.append(player)
-        gameSetupDelegate?.connectedPlayersDidChange(players: players) // Technically we haven't connected yet, but we need to get the name here. TODO: Fix race condition when they press start before subscription.
+        // We will notify the delegate of new players when we detect that they connect
         peripheral.delegate = self
         central.connect(peripheral, options: nil)
     }
@@ -130,7 +134,7 @@ extension GameCentral: CBPeripheralDelegate {
         }
 
         let service = peripheral.services!.first(where: { $0.uuid == gameUuid })
-        peripheral.discoverCharacteristics([Constants.PlayerNameCharacteristic, Constants.StartPlayCharacteristic, Constants.IsPlayerTurnCharacteristic, Constants.IsPausedCharacteristic, Constants.IsPlayerTimeExpiredCharacteristic], for: service!)
+        peripheral.discoverCharacteristics(charsToDiscover, for: service!)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -163,14 +167,27 @@ extension GameCentral: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         if let error = error {
             print(error)
-            return
         }
 
-        guard let characteristics = service.characteristics else {
-            return
-        }
+        // Make sure we have discovered all of the necessary characteristics before showing this as a connected player. Otherwise, we have a race condition where they start the game before we have discovered and subscribed to the right characteristics.
+        let connectedPlayers = players.filter { player in
+            if let periph = player.peripheral {
+                if let service = periph.services?[0], let chars = service.characteristics {
+                    for needToFind in charsToDiscover {
+                        let index = chars.index { $0.uuid == needToFind }
+                        if index == nil {
+                            return false
+                        }
+                    }
+                    return true
+                }
 
-        let char = characteristics.first(where: { $0.uuid == Constants.IsPlayerTurnCharacteristic })
-        peripheral.setNotifyValue(true, for: char!)
+                return false // No service or not all characteristics discovered yet
+            } else {
+                // Should be the "Me" player
+                return true
+            }
+        }
+        gameSetupDelegate?.connectedPlayersDidChange(players: connectedPlayers)
     }
 }
