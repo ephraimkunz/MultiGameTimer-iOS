@@ -8,6 +8,8 @@
 
 import UIKit
 
+fileprivate let buttonDisabledColor = UIColor(red: (99.0 / 255), green: (93.0 / 255), blue: (87.0 / 255), alpha: 1)
+
 class PlayGameViewController: UIViewController {
     var central: GameCentral?
     var players: [Player]?
@@ -23,13 +25,12 @@ class PlayGameViewController: UIViewController {
     var incrementTime: Int!
     var clockStoppedOnPause = false
 
-    @IBOutlet weak var timeLabel: UILabel!
     @IBOutlet weak var stopClockButton: UIButton!
     @IBOutlet weak var pauseButton: UIButton!
     @IBOutlet weak var pauseLabel: UILabel!
 
     @IBAction func pauseButtonTapped(_ sender: Any) {
-        if pauseButton.titleLabel?.text == "Pause" {
+        if pauseButton.currentImage == UIImage(named: "pauseIcon") {
             setStateForPause(isPaused: true)
             // Above call hides pause button, but we want it to show. So fix that below
             pauseButton.isEnabled = true
@@ -56,7 +57,7 @@ class PlayGameViewController: UIViewController {
         pauseLabel.isHidden = true
 
         clock = GameClock(initialTime: TimeInterval(startTime), increment: TimeInterval(incrementTime), clockTickedCallback: { timeString in
-            self.timeLabel.text = timeString
+            self.stopClockButton.setTitle(timeString, for: .normal)
         }, clockExpiredCallback: { _ in
             // Handle clock expiration: eject the player from the game
             if self.isCentral {
@@ -66,14 +67,17 @@ class PlayGameViewController: UIViewController {
             }
         })
 
-
         // Set initial time label, as it may be some time before this player gets to go
-        self.timeLabel.text = clock.formattedTimeRemaining()
+        self.stopClockButton.setTitle(clock.formattedTimeRemaining(), for: .normal)
 
         central?.gamePlayDelegate = self
         peripheral?.gamePlayDelegate = self
 
         stopClockButton.isEnabled = false
+        stopClockButton.setBackgroundColor(color: buttonDisabledColor, forState: UIControlState.disabled)
+        stopClockButton.layer.cornerRadius = 5
+        stopClockButton.layer.masksToBounds = true // Corner radius persists when disabled as well
+        stopClockButton.titleLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 45, weight: UIFontWeightBold)
 
         if isCentral {
             nextPlayerIndex = 0
@@ -98,14 +102,14 @@ class PlayGameViewController: UIViewController {
     func disablePauseMode() {
         pauseLabel.isHidden = true
         pauseButton.isEnabled = true
-        pauseButton.setTitle("Pause", for: .normal)
+        pauseButton.setImage(UIImage(named: "pauseIcon"), for: .normal)
     }
 
     // Other device (central) told this device to enable pause mode
     func enablePauseMode() {
         pauseLabel.isHidden = false
         pauseButton.isEnabled = false
-        pauseButton.setTitle("Play", for: .normal)
+        pauseButton.setImage(UIImage(named: "playIcon"), for: .normal)
     }
 
     // Advances the turn to the next player
@@ -126,7 +130,7 @@ class PlayGameViewController: UIViewController {
     func startPlayerTurn(player: Player) {
         if player.peripheral == nil { // My turn
             stopClockButton.isEnabled = true
-            clock.startClock()
+            clock.startClock(shouldIncrement: true)
         } else { // One of my connected peripheral's turns
             central?.startPlayerTurn(player: player)
         }
@@ -146,7 +150,7 @@ class PlayGameViewController: UIViewController {
             enablePauseMode()
         } else {
             if clockStoppedOnPause {
-                clock.startClock()
+                clock.startClock(shouldIncrement: false)
                 clockStoppedOnPause = false
                 stopClockButton.isEnabled = true
             }
@@ -166,7 +170,6 @@ extension PlayGameViewController: GamePlayCentralDelegate {
         if nextPlayerIndex! > players!.count - 1 {
             nextPlayerIndex = 0
         }
-
         nextPlayer()
     }
 
@@ -185,7 +188,7 @@ extension PlayGameViewController: GamePlayCentralDelegate {
 
 extension PlayGameViewController: GamePlayPeripheralDelegate {
     func turnDidStart() {
-        clock.startClock()
+        clock.startClock(shouldIncrement: true)
         stopClockButton.isEnabled = true
     }
 

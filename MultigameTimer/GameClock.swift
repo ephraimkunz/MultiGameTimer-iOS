@@ -39,8 +39,10 @@ class GameClock {
         }
     }
 
-    func startClock() {
-        time += increment
+    func startClock(shouldIncrement: Bool) {
+        if shouldIncrement { // We don't increment when resuming from a pause
+            time += increment
+        }
         timer = Timer.scheduledTimer(timeInterval: timerInterval, target: self, selector: #selector(timerFired), userInfo: nil, repeats: true)
     }
 

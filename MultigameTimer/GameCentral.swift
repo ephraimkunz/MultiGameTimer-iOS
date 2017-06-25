@@ -112,7 +112,7 @@ extension GameCentral: CBCentralManagerDelegate {
         player.displayName = name
         player.peripheral = peripheral
         players.append(player)
-        gameSetupDelegate?.connectedPlayersDidChange(players: players) // Technically we haven't connected yet, but we need to get the name here.
+        gameSetupDelegate?.connectedPlayersDidChange(players: players) // Technically we haven't connected yet, but we need to get the name here. TODO: Fix race condition when they press start before subscription.
         peripheral.delegate = self
         central.connect(peripheral, options: nil)
     }

@@ -286,56 +286,55 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7U9-mC-eDa">
-                                <rect key="frame" x="20" y="629" width="335" height="30"/>
-                                <state key="normal" title="Transition to Next"/>
+                            <button opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="249" verticalCompressionResistancePriority="749" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7U9-mC-eDa">
+                                <rect key="frame" x="10" y="115" width="355" height="542"/>
+                                <color key="backgroundColor" red="0.90508764982223511" green="0.56695461273193359" blue="0.17244589328765869" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="37"/>
+                                <state key="normal" title="00:00:00">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="disabled">
+                                    <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
                                 <connections>
                                     <action selector="stopButtonTapped:" destination="TzT-WI-G2Z" eventType="touchUpInside" id="VoX-MB-p2I"/>
                                 </connections>
                             </button>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="V9Y-fL-Kn3">
-                                <rect key="frame" x="154" y="317" width="66.5" height="33.5"/>
-                                <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ZKm-LR-pcx">
-                                <rect key="frame" x="166" y="28" width="42" height="30"/>
-                                <state key="normal" title="Pause"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ZKm-LR-pcx">
+                                <rect key="frame" x="162" y="28" width="50" height="50"/>
+                                <state key="normal" image="pauseIcon"/>
                                 <connections>
                                     <action selector="pauseButtonTapped:" destination="TzT-WI-G2Z" eventType="touchUpInside" id="j0n-i1-Jyv"/>
                                 </connections>
                             </button>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Paused" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0Gz-61-WRD">
-                                <rect key="frame" x="159" y="66" width="57" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Game paused" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0Gz-61-WRD">
+                                <rect key="frame" x="134.5" y="86" width="106" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <nil key="textColor"/>
+                                <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="7U9-mC-eDa" firstAttribute="leading" secondItem="pCm-Db-dsY" secondAttribute="leading" constant="20" symbolic="YES" id="EsV-uG-bUE"/>
+                            <constraint firstItem="7U9-mC-eDa" firstAttribute="leading" secondItem="pCm-Db-dsY" secondAttribute="leading" constant="10" id="EsV-uG-bUE"/>
                             <constraint firstItem="ZKm-LR-pcx" firstAttribute="centerX" secondItem="pCm-Db-dsY" secondAttribute="centerX" id="QIM-gs-Yup"/>
                             <constraint firstItem="0Gz-61-WRD" firstAttribute="top" secondItem="ZKm-LR-pcx" secondAttribute="bottom" constant="8" symbolic="YES" id="T8d-d5-fGR"/>
-                            <constraint firstItem="V9Y-fL-Kn3" firstAttribute="centerX" secondItem="pCm-Db-dsY" secondAttribute="centerX" id="Z8g-4H-drJ"/>
                             <constraint firstItem="0Gz-61-WRD" firstAttribute="centerX" secondItem="pCm-Db-dsY" secondAttribute="centerX" id="ckJ-De-51S"/>
                             <constraint firstItem="ZKm-LR-pcx" firstAttribute="top" secondItem="9xJ-xW-nfj" secondAttribute="bottom" constant="8" symbolic="YES" id="eZm-ym-S0n"/>
-                            <constraint firstAttribute="trailing" secondItem="7U9-mC-eDa" secondAttribute="trailing" constant="20" symbolic="YES" id="k2O-1M-xfE"/>
-                            <constraint firstItem="xAi-l4-KfZ" firstAttribute="top" secondItem="7U9-mC-eDa" secondAttribute="bottom" constant="8" symbolic="YES" id="yg3-0u-Qxz"/>
-                            <constraint firstItem="V9Y-fL-Kn3" firstAttribute="centerY" secondItem="pCm-Db-dsY" secondAttribute="centerY" id="zfq-El-iay"/>
+                            <constraint firstAttribute="trailing" secondItem="7U9-mC-eDa" secondAttribute="trailing" constant="10" id="k2O-1M-xfE"/>
+                            <constraint firstItem="7U9-mC-eDa" firstAttribute="top" secondItem="0Gz-61-WRD" secondAttribute="bottom" constant="8" symbolic="YES" id="nQa-UA-kGi"/>
+                            <constraint firstItem="xAi-l4-KfZ" firstAttribute="top" secondItem="7U9-mC-eDa" secondAttribute="bottom" constant="10" id="yg3-0u-Qxz"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="pauseButton" destination="ZKm-LR-pcx" id="wuE-VW-FMY"/>
                         <outlet property="pauseLabel" destination="0Gz-61-WRD" id="sj2-Fl-y4l"/>
                         <outlet property="stopClockButton" destination="7U9-mC-eDa" id="s6f-c3-Dkx"/>
-                        <outlet property="timeLabel" destination="V9Y-fL-Kn3" id="Vce-lf-TfM"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ikR-4c-qHE" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3462" y="616"/>
+            <point key="canvasLocation" x="3461.5999999999999" y="615.74212893553226"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="9Pg-ks-0OO">
@@ -356,4 +355,7 @@
             <point key="canvasLocation" x="133.59999999999999" y="792.95352323838085"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="pauseIcon" width="50" height="50"/>
+    </resources>
 </document>

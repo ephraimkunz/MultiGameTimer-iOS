@@ -21,6 +21,7 @@
 		E38183341EF8E814006380D9 /* GameClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = E38183331EF8E814006380D9 /* GameClock.swift */; };
 		E3A9F05F1EF6D621002C5F17 /* WaitForGameStartViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A9F05E1EF6D621002C5F17 /* WaitForGameStartViewController.swift */; };
 		E3A9F0611EF6E5E6002C5F17 /* PlayGameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A9F0601EF6E5E6002C5F17 /* PlayGameViewController.swift */; };
+		E3B8D9021EFF691600542A23 /* ButtonExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B8D9011EFF691600542A23 /* ButtonExtensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		E38183331EF8E814006380D9 /* GameClock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameClock.swift; sourceTree = "<group>"; };
 		E3A9F05E1EF6D621002C5F17 /* WaitForGameStartViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WaitForGameStartViewController.swift; sourceTree = "<group>"; };
 		E3A9F0601EF6E5E6002C5F17 /* PlayGameViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlayGameViewController.swift; sourceTree = "<group>"; };
+		E3B8D9011EFF691600542A23 /* ButtonExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonExtensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +85,7 @@
 				E33F37011EF56B10004A5781 /* LaunchScreen.storyboard */,
 				E33F37041EF56B10004A5781 /* Info.plist */,
 				E38183331EF8E814006380D9 /* GameClock.swift */,
+				E3B8D9011EFF691600542A23 /* ButtonExtensions.swift */,
 			);
 			path = MultigameTimer;
 			sourceTree = "<group>";
@@ -181,6 +184,7 @@
 				E33F37131EF57955004A5781 /* GamePeripheral.swift in Sources */,
 				E33F37151EF5A76E004A5781 /* Player.swift in Sources */,
 				E33F370B1EF56C29004A5781 /* CreateGameViewController.swift in Sources */,
+				E3B8D9021EFF691600542A23 /* ButtonExtensions.swift in Sources */,
 				E33F36FB1EF56B10004A5781 /* ViewController.swift in Sources */,
 				E33F36F91EF56B10004A5781 /* AppDelegate.swift in Sources */,
 			);
