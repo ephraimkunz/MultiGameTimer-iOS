@@ -67,6 +67,8 @@ class PlayGameViewController: UIViewController {
             }
         })
 
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Quit Game", style: .plain, target: self, action: #selector(quitGame))
+
         // Set initial time label, as it may be some time before this player gets to go
         self.stopClockButton.setTitle(clock.formattedTimeRemaining(), for: .normal)
 
@@ -83,6 +85,17 @@ class PlayGameViewController: UIViewController {
             nextPlayerIndex = 0
             nextPlayer()
         }
+    }
+
+    func quitGame(sender: UIBarButtonItem) {
+        let alert = UIAlertController.init(title: "Quit Game", message: "Are you sure you want to quit the game?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "Quit", style: .destructive, handler: { alert in
+            // TODO: Handle popping back to beginning:
+
+        }))
+
+        present(alert, animated: true, completion: nil)
     }
 
     // This device needs to notify other devices that the local pause state changed.
