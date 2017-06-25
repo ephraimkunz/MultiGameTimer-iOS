@@ -59,12 +59,7 @@ class PlayGameViewController: UIViewController {
         clock = GameClock(initialTime: TimeInterval(startTime), increment: TimeInterval(incrementTime), clockTickedCallback: { timeString in
             self.stopClockButton.setTitle(timeString, for: .normal)
         }, clockExpiredCallback: { _ in
-            // Handle clock expiration: eject the player from the game
-            if self.isCentral {
-                // Not really sure how to handle this. Transfer all players to a new central?
-            } else {
-                self.peripheral?.myTimeExpired()
-            }
+            self.cleanupConnectionStateOnQuit()
         })
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Quit Game", style: .plain, target: self, action: #selector(quitGame))
@@ -91,11 +86,33 @@ class PlayGameViewController: UIViewController {
         let alert = UIAlertController.init(title: "Quit Game", message: "Are you sure you want to quit the game?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "Quit", style: .destructive, handler: { alert in
-            // TODO: Handle popping back to beginning:
-
+            self.cleanupConnectionStateOnQuit()
         }))
 
         present(alert, animated: true, completion: nil)
+    }
+
+    func cleanupConnectionStateOnQuit() {
+        if self.isCentral {
+            // Not really sure how to handle this. Transfer all players to a new central?
+            if players!.count <= 1 {
+                self.navigationController?.popToRootViewController(animated: true)
+            }
+        } else {
+            self.peripheral?.myTimeExpired()
+            // Cleanup connection state
+
+            // Don't execute this until everything before it has completed. Otherwise those operations will be released on destruction of the view controllers.
+            // For now, just wait a little
+
+            Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(popToRoot), userInfo: nil, repeats: false)
+
+            //self.navigationController?.popToRootViewController(animated: true)
+        }
+    }
+
+    func popToRoot() {
+        navigationController?.popToRootViewController(animated: true)
     }
 
     // This device needs to notify other devices that the local pause state changed.
@@ -128,6 +145,10 @@ class PlayGameViewController: UIViewController {
     // Advances the turn to the next player
     func nextPlayer() {
         if let index = nextPlayerIndex, let players = players {
+            if players.count <= 1 {
+                // No one left to play, so exit
+                cleanupConnectionStateOnQuit()
+            }
             currentPlayer = players[index]
             startPlayerTurn(player: currentPlayer!)
 
