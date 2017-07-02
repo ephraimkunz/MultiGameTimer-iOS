@@ -10,6 +10,6 @@ import Foundation
 import CoreBluetooth
 
 class Player {
-    var displayName = ""
+    var displayName: String?
     var peripheral: CBPeripheral?
 }

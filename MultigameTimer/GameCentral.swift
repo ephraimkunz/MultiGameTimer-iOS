@@ -46,6 +46,29 @@ class GameCentral: NSObject {
         centralManager.stopScan()
     }
 
+    func updateConnectedPlayersChangedIfNecessary() {
+        // Make sure we have discovered all of the necessary characteristics before showing this as a connected player. Otherwise, we have a race condition where they start the game before we have discovered and subscribed to the right characteristics.
+        let connectedPlayers = players.filter { player in
+            if let periph = player.peripheral {
+                if let service = periph.services?[0], let chars = service.characteristics {
+                    for needToFind in charsToDiscover {
+                        let index = chars.index { $0.uuid == needToFind }
+                        if index == nil || player.displayName == nil {
+                            return false
+                        }
+                    }
+                    return true
+                }
+
+                return false // No service or not all characteristics discovered yet
+            } else {
+                // Should be the "Me" player
+                return true
+            }
+        }
+        gameSetupDelegate?.connectedPlayersDidChange(players: connectedPlayers)
+    }
+
     func pauseStateChanged(paused: Bool, exclude: Player?) {
         let writeValue = paused ? "true" : "false"
         
@@ -108,12 +131,8 @@ extension GameCentral: CBCentralManagerDelegate {
     }
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        guard let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String else {
-            return
-        }
 
         let player = Player()
-        player.displayName = name
         player.peripheral = peripheral
         players.append(player)
         // We will notify the delegate of new players when we detect that they connect
@@ -161,6 +180,13 @@ extension GameCentral: CBPeripheralDelegate {
             players.remove(at: index!)
             centralManager.cancelPeripheralConnection(peripheral)
             gamePlayDelegate?.playerDidExitGame(player: player)
+        } else if characteristic.uuid == Constants.PlayerNameCharacteristic {
+            let player = players.first(where: { $0.peripheral?.identifier == peripheral.identifier })
+            if let data = characteristic.value, let value = String(data: data, encoding: .ascii), let player = player {
+                player.displayName = value
+                // Now that we have a name, update the list as necessary
+                updateConnectedPlayersChangedIfNecessary()
+            }
         }
     }
 
@@ -169,25 +195,14 @@ extension GameCentral: CBPeripheralDelegate {
             print(error)
         }
 
-        // Make sure we have discovered all of the necessary characteristics before showing this as a connected player. Otherwise, we have a race condition where they start the game before we have discovered and subscribed to the right characteristics.
-        let connectedPlayers = players.filter { player in
-            if let periph = player.peripheral {
-                if let service = periph.services?[0], let chars = service.characteristics {
-                    for needToFind in charsToDiscover {
-                        let index = chars.index { $0.uuid == needToFind }
-                        if index == nil {
-                            return false
-                        }
-                    }
-                    return true
-                }
-
-                return false // No service or not all characteristics discovered yet
-            } else {
-                // Should be the "Me" player
-                return true
+        // Read the char, if it was the name
+        if let chars = service.characteristics {
+            let optionalNameChar = chars.first { $0.uuid == Constants.PlayerNameCharacteristic }
+            if let nameChar = optionalNameChar {
+                peripheral.readValue(for: nameChar)
             }
         }
-        gameSetupDelegate?.connectedPlayersDidChange(players: connectedPlayers)
+
+        updateConnectedPlayersChangedIfNecessary()
     }
 }

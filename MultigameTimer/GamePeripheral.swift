@@ -62,14 +62,12 @@ class GamePeripheral: NSObject {
 
     func joinGame() {
         let startPlay = CBMutableCharacteristic(type: Constants.StartPlayCharacteristic, properties: .write, value: nil, permissions: .writeable)
+        let playerName = CBMutableCharacteristic(type: Constants.PlayerNameCharacteristic, properties: .read, value: UIDevice.current.name.data(using: .ascii), permissions: .readable)
 
         // Save these characteristics so we can update values for them later
         IsPlayerTurnCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTurnCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
         IsPausedCharacteristic = CBMutableCharacteristic(type: Constants.IsPausedCharacteristic, properties: [.write, .notify], value: nil, permissions: [.readable, .writeable])
         IsTimeExpiredCharacteristic = CBMutableCharacteristic(type: Constants.IsPlayerTimeExpiredCharacteristic, properties: [.notify], value: nil, permissions: .readable)
-
-        let name = UIDevice.current.name
-        let playerName = CBMutableCharacteristic(type: Constants.PlayerNameCharacteristic, properties: .read, value: name.data(using: .ascii), permissions: .readable)
 
         let gameService = CBMutableService(type: CBUUID(string: gameUuid), primary: true)
         gameService.characteristics = [startPlay, playerName, IsPlayerTurnCharacteristic!, IsPausedCharacteristic!, IsTimeExpiredCharacteristic!]
@@ -77,8 +75,7 @@ class GamePeripheral: NSObject {
 
         peripheralManager.add(gameService)
         peripheralManager.startAdvertising(
-            [CBAdvertisementDataLocalNameKey: UIDevice.current.name,
-            CBAdvertisementDataServiceUUIDsKey: [gameService.uuid]]
+            [CBAdvertisementDataServiceUUIDsKey: [gameService.uuid]]
         )
     }
 }
